@@ -51,7 +51,7 @@ public class Tester
 									+ "fill-mode: dyn-plain;"
 									+ "fill-color: black, red, blue;"
 									+ "}");
-//		g.display(true);
+		g.display(true);
 		
 		maxXNodes = 10;
 		maxYNodes = 10;
@@ -235,7 +235,7 @@ public class Tester
 			}
 		}
 		
-		GraphParser.graphToFile("test.txt", g);
+		GraphParser.graphToFile("testfile", g);
 	}
 	
 	
