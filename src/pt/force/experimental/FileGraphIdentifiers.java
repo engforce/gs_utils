@@ -18,6 +18,8 @@ public enum FileGraphIdentifiers
 	EdgeCount("edgeCount"),
 	Nodes("nodes"),
 	Edges("edges"),
+	AttributeType("type"),
+	AttributeValue("value"),
 	DEFAULT("");
 	
 	private String enumValue;

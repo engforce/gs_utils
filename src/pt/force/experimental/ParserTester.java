@@ -8,10 +8,17 @@ import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.DefaultGraph;
 import org.graphstream.graph.implementations.SingleNode;
 
-
+/**
+ * 
+ * @author Force
+ *
+ */
 public class ParserTester
 {
-
+	/**
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args)
 	{
 		Graph g = new DefaultGraph("a random sq graph", false, false);
@@ -41,18 +48,36 @@ public class ParserTester
 	}
 
 	
+	/**
+	 * 
+	 * @param filename
+	 * @param g
+	 */
 	private static void save(String filename, Graph g)
 	{
 		GraphParser.graphToFile(filename, g);
 	}
 
 	
+	/**
+	 * 
+	 * @param filename
+	 * @return
+	 */
 	private static Graph load(String filename)
 	{
 		return GraphParser.graphFromFile(filename);
 	}
 
 	
+	/**
+	 * 
+	 * @param g
+	 * @param maxXNodes
+	 * @param maxYNodes
+	 * @param maxZNodes
+	 * @return
+	 */
 	private static Graph buildSquareNodes(Graph g, int maxXNodes, int maxYNodes, int maxZNodes)
 	{
 		int nodeCount = 0;
@@ -151,6 +176,11 @@ public class ParserTester
 	}
 	
 	
+	/**
+	 * 
+	 * @param value
+	 * @return
+	 */
 	private static double trunc(double value)
 	{
 		return (double) Math.round(value * 100)/100;

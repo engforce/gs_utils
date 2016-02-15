@@ -20,14 +20,25 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+
+/**
+ * 
+ * @author Force
+ *
+ */
 public class GraphParser
 {
+	/**
+	 * 
+	 * @param filename
+	 * @param g
+	 */
 	public static void graphToFile(String filename, Graph g)
 	{
 		File f = new File(filename.concat(".json"));
 		FileWriter fw;
 		
-		if(true /*f.canWrite() &&	f.isFile()*/)
+		if(f.canWrite() &&	f.isFile())
 		{
 			try
 			{
@@ -64,8 +75,8 @@ public class GraphParser
 						String type = n.getAttribute(attributeName).getClass().getCanonicalName();
 						
 						JsonObject attriTuple = new JsonObject();
-						attriTuple.addProperty("value", attribute);
-						attriTuple.addProperty("type", type);
+						attriTuple.addProperty(FileGraphIdentifiers.AttributeValue.toString(), attribute);
+						attriTuple.addProperty(FileGraphIdentifiers.AttributeType.toString(), type);
 						
 						jsonNode.add(attributeName, attriTuple);
 					}
@@ -91,8 +102,8 @@ public class GraphParser
 						
 						String type = e.getAttribute(attributeName).getClass().getCanonicalName();
 						JsonObject attriTuple = new JsonObject();
-						attriTuple.addProperty("value", attribute);
-						attriTuple.addProperty("type", type);
+						attriTuple.addProperty(FileGraphIdentifiers.AttributeValue.toString(), attribute);
+						attriTuple.addProperty(FileGraphIdentifiers.AttributeType.toString(), type);
 						
 						jsonEdge.add(attributeName, attriTuple);
 					}
@@ -114,6 +125,11 @@ public class GraphParser
 	}
 
 	
+	/**
+	 * 
+	 * @param filename
+	 * @return
+	 */
 	public static Graph graphFromFile(String filename)
 	{
 		Graph g = null;
@@ -166,6 +182,11 @@ public class GraphParser
 	}
 
 	
+	/**
+	 * 
+	 * @param data
+	 * @return
+	 */
 	private static Graph createGraph(JsonObject data)
 	{
 		Graph graph = new DefaultGraph("default_name", false, false);
@@ -184,6 +205,11 @@ public class GraphParser
 	}
 
 	
+	/**
+	 * 
+	 * @param data
+	 * @param g
+	 */
 	private static void insertEdges(JsonObject data, Graph g)
 	{	
 		JsonArray jsonEdges = data.getAsJsonArray(FileGraphIdentifiers.Edges.toString());
@@ -208,10 +234,10 @@ public class GraphParser
 				else
 				{
 					JsonObject sub = e.getValue().getAsJsonObject();
-					String subValue = sub.get("value").getAsString();
-					String type = sub.get("type").getAsString();
+					String subValue = sub.get(FileGraphIdentifiers.AttributeValue.toString()).getAsString();
+					String type = sub.get(FileGraphIdentifiers.AttributeType.toString()).getAsString();
 					
-					value = parseValue(subValue, type);
+					value = ClassTypeUtil.parseValue(subValue, ClassTypeUtil.valueOfEnum(type));
 				}
 				
 				switch(FileGraphIdentifiers.valueOfEnum(key))
@@ -243,7 +269,11 @@ public class GraphParser
 		}
 	}
 
-
+	/**
+	 * 
+	 * @param data
+	 * @param graph
+	 */
 	private static void insertNodes(JsonObject data, Graph graph)
 	{		
 		JsonArray jsonNodes = data.getAsJsonArray(FileGraphIdentifiers.Nodes.toString());
@@ -266,10 +296,10 @@ public class GraphParser
 				else
 				{
 					JsonObject sub = e.getValue().getAsJsonObject();
-					String subValue = sub.get("value").getAsString();
-					String type = sub.get("type").getAsString();
+					String subValue = sub.get(FileGraphIdentifiers.AttributeValue.toString()).getAsString();
+					String type = sub.get(FileGraphIdentifiers.AttributeType.toString()).getAsString();
 					
-					value = parseValue(subValue, type);
+					value = ClassTypeUtil.parseValue(subValue, ClassTypeUtil.valueOfEnum(type));
 				}
 				
 				switch(FileGraphIdentifiers.valueOfEnum(key))
@@ -294,22 +324,12 @@ public class GraphParser
 		}
 	}
 
-	
-	private static Object parseValue(String subValue, String type)
-	{
-		switch(type)
-		{
-			case "java.lang.Integer":
-				return Integer.parseInt(subValue);
-			case "java.lang.String":
-				return String.valueOf(subValue);
-			case "java.lang.Double":
-				return Double.parseDouble(subValue);
-		}
-		return null;
-	}
 
-
+	/**
+	 * 
+	 * @param data
+	 * @return
+	 */
 	private static HashMap<String, String> extractAttributes(JsonObject data)
 	{
 		HashMap<String, String> graphAttributes = new HashMap<>();
@@ -325,20 +345,5 @@ public class GraphParser
 		}
 		
 		return graphAttributes;
-	}
-
-
-	private static Object stringToClass(String type)
-	{
-		switch(type)
-		{
-			case "java.lang.Integer":
-				return (Integer.class);
-			case "java.lang.String":
-				return (String.class);
-			case "java.lang.Double":
-				return (Double.class);
-		}
-		return null;
 	}
 }
