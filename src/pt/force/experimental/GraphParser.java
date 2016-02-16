@@ -49,6 +49,9 @@ public class GraphParser
 				
 				
 				JsonObject jsonGraph = new JsonObject();
+				String graphID = g.getId().toString();
+				jsonGraph.addProperty(FileGraphIdentifiers.GraphID.toString(), graphID);
+				
 				JsonObject jGraphAttributes = new JsonObject();
 				for(String attributeName : g.getAttributeKeySet())
 				{
@@ -168,7 +171,7 @@ public class GraphParser
 				fr.close();
 				
 				
-				g = createGraph(data);
+				g = createGraph(data, getGraphID(data));
 				insertNodes(data, g);
 				insertEdges(data, g);			
 			}
@@ -187,9 +190,20 @@ public class GraphParser
 	 * @param data
 	 * @return
 	 */
-	private static Graph createGraph(JsonObject data)
+	private static String getGraphID(JsonObject data)
 	{
-		Graph graph = new DefaultGraph("default_name", false, false);
+		return data.get(FileGraphIdentifiers.GraphID.toString()).getAsString(); 
+	}
+
+
+	/**
+	 * 
+	 * @param data
+	 * @return
+	 */
+	private static Graph createGraph(JsonObject data, String graphID)
+	{
+		Graph graph = new DefaultGraph(graphID, false, false);
 		
 		HashMap<String, String> graphAttributes = extractAttributes(data);
 		

@@ -9,6 +9,7 @@ package pt.force.experimental;
  */
 public enum FileGraphIdentifiers
 {
+	GraphID("graphID"),
 	NodeID("nodeID"),
 	EdgeNode1ID("node1ID"),
 	EdgeNode2ID("node2ID"),
