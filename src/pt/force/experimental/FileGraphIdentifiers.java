@@ -23,19 +23,33 @@ public enum FileGraphIdentifiers
 	AttributeValue("value"),
 	DEFAULT("");
 	
+	/**
+	 * 
+	 */
 	private String enumValue;
-		
+	
+	/**
+	 * 
+	 * @param enumValue
+	 */
 	private FileGraphIdentifiers(String enumValue)
 	{
 		this.enumValue = enumValue;
 	}
 
+	
 	@Override
 	public String toString()
 	{
 		return this.enumValue;
 	}
 	
+	
+	/**
+	 * 
+	 * @param name
+	 * @return
+	 */
 	public static FileGraphIdentifiers valueOfEnum(String name)
 	{
 		for(FileGraphIdentifiers identifier : FileGraphIdentifiers.values())

@@ -3,6 +3,8 @@
  */
 package pt.force.experimental;
 
+import java.io.IOException;
+
 import javafx.geometry.Point3D;
 
 import org.graphstream.graph.Edge;
@@ -235,7 +237,14 @@ public class Tester
 			}
 		}
 		
-		GraphParser.graphToFile("testfile", g);
+//		try
+//		{
+//			GraphParser.graphToFile("testfile", g);
+//		}
+//		catch(IOException e)
+//		{
+//			e.printStackTrace();
+//		}
 	}
 	
 	

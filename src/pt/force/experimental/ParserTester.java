@@ -1,5 +1,7 @@
 package pt.force.experimental;
 
+import java.io.IOException;
+
 import javafx.geometry.Point3D;
 
 import org.graphstream.graph.Edge;
@@ -13,6 +15,7 @@ import org.graphstream.graph.implementations.SingleNode;
  * @author Force
  *
  */
+@SuppressWarnings("restriction")
 public class ParserTester
 {
 	/**
@@ -55,7 +58,14 @@ public class ParserTester
 	 */
 	private static void save(String filename, Graph g)
 	{
-		GraphParser.graphToFile(filename, g);
+		try
+		{
+			GraphParser.graphToFile(filename, g);
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	
@@ -108,6 +118,11 @@ public class ParserTester
 	}
 	
 	
+	/**
+	 * 
+	 * @param g
+	 * @return
+	 */
 	private static Graph connectIntoCube(Graph g)
 	{
 		int nodeCount = g.getNodeCount();
