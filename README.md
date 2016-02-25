@@ -11,7 +11,10 @@ At the moment only a simple, not yet complete, parser is available. **(meant to 
 As this project sails into the future I'll list, here in this file, it's features!
 
 ####Coming soon:
-* API Documentation!
+* ~API Documentation!~
 * Save/Load improvements
+
+####Just added:
+* Documentation
 
 Feel free to browse : D
