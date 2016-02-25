@@ -24,7 +24,6 @@ import com.google.gson.JsonObject;
 /**
  * A graph parsing library that provides a standard way of saving/loading graphs created with the GraphStream library
  * @author Force
- *
  */
 public class GraphParser
 {
@@ -39,7 +38,17 @@ public class GraphParser
 		File file = new File(filename.concat(".json"));
 		FileWriter fileWriter;
 		
-		if(file.canWrite() && file.isFile())
+		if(!file.isFile())
+		{
+			//If the file is not an actual file, throw an IOException
+			throw new IOException("File is not actually a file");
+		}
+		else if(!file.canWrite())
+		{
+			//If the file cannot be written, throw an IOException
+			throw new IOException("File could not be written");
+		}
+		else
 		{
 			try
 			{
@@ -162,65 +171,50 @@ public class GraphParser
 				e.printStackTrace();
 			}
 		}
-		else
-		{
-			//If the file is not an actual file, throw an IOException
-			if(!file.isFile())
-				throw new IOException("File is not actually a file");
-			//If the file cannot be written, throw an IOException
-			if(!file.canWrite())
-				throw new IOException("File could not be written");
-		}
 	}
 
 	
 	/**
-	 * Given a filename path to a json stored graph this method reads the file's content and creates </br>
+	 * Given a filename path to a json stored graph this method reads the file's content and creates 
 	 * a graph based on that data
 	 * @param filename the path to the file (includes the file name)
 	 * @return the created graph
+	 * @throws IOException throws an exception if the file cannot be read or if its not a file  
 	 */
-	public static Graph graphFromFile(String filename)
+	public static Graph graphFromFile(String filename) throws IOException
 	{
-		Graph g = null;
+		Graph graph = null;
 		
-		File f = new File(filename.concat(".json"));
+		File file = new File(filename.concat(".json"));
 		
-		if(!f.isFile())
+		if(!file.isFile())
 		{
-			return null;
+			//If the file is not an actual file, throw an IOException
+			throw new IOException("File is not actually a file");
 		}
-		else if(!f.canRead())
+		else if(!file.canRead())
 		{
-			return null;
+			//If the file cannot be written, throw an IOException
+			throw new IOException("File could not be read");
 		}
 		else
 		{
 			try
-			{
-				FileReader fr = new FileReader(f);
-				Gson gson = new GsonBuilder().create();
-				
-				BufferedReader bf = new BufferedReader(fr);
-				String line = null;
-			    StringBuilder stringBuilder = new StringBuilder();
-				
-			    while((line = bf.readLine()) != null)
-			    {
-		            stringBuilder.append(line.trim());
-		        }
+			{	
+				//Read the json file and dump its content into a string
+			    String jsonFileString = fileContentToString(file);
 			    
-			    String theJson = stringBuilder.toString();
-				JsonObject data = gson.fromJson(theJson, JsonObject.class);
+			    //Initialize a gson object for data convertion
+			    Gson gson = new GsonBuilder().create();
+			    //Take the json file string and convert it into a Json Object
+				JsonObject data = gson.fromJson(jsonFileString, JsonObject.class);
 				
-
-				bf.close();
-				fr.close();
-				
-				
-				g = createGraph(data, getGraphID(data));
-				insertNodes(data, g);
-				insertEdges(data, g);			
+				//Create the graph with its attributes
+				graph = createGraph(data, getGraphID(data));
+				//Insert the nodes
+				insertNodes(data, graph);
+				//Insert the edges
+				insertEdges(data, graph);			
 			}
 			catch(IOException | NullPointerException e)
 			{
@@ -228,19 +222,59 @@ public class GraphParser
 			}
 		}
 		
-		return g;
+		if(graph == null)
+		{
+			//Throw a NullPointerException if the graph still is null
+			throw new NullPointerException("The graph could not be created");
+		}
+		return graph;
 	}
 
 	
 	/**
-	 * 
-	 * @param data
-	 * @return
+	 * Takes a file and reads its content into a String
+	 * @param file a java File Object
+	 * @return String with the content
+	 * @throws IOException 
 	 */
-	private static String getGraphID(JsonObject data) throws NullPointerException
+	protected static String fileContentToString(File file) throws IOException
 	{
+		//Create a new FileReader
+		FileReader fileReader = new FileReader(file);
+		
+		//Create a BufferedReader
+		BufferedReader readBuffer = new BufferedReader(fileReader);
+		//Auxiliary String that holds, at a given time, a line from the file
+		String line = null;
+		//Create a StringBuilder to store the contents
+	    StringBuilder stringBuilder = new StringBuilder();
+		
+	    //Go through each line in the file
+	    while((line = readBuffer.readLine()) != null)
+	    {
+	    	//Append each line
+            stringBuilder.append(line.trim());
+        }
+	    
+	    //Close the reader
+	    fileReader.close();
+	    
+	    return stringBuilder.toString();
+	}
+	
+	
+	/**
+	 * Attempts to retrieve the GraphID from the given data, if not successful throws an exception
+	 * @param data a JsonObject containing a graph
+	 * @return the graphID
+	 * @throws NullPointerException
+	 */
+	protected static String getGraphID(JsonObject data) throws NullPointerException
+	{
+		//Get the graphID in the form of a JsonElement (may be null if not found)
 		JsonElement graphIDElement = data.get(FileGraphIdentifiers.GraphID.toString());
 		
+		//If null throw an exception
 		if(graphIDElement == null)
 			throw new NullPointerException("The data doesn't provide a graph ID");
 		
@@ -249,84 +283,113 @@ public class GraphParser
 
 
 	/**
-	 * 
+	 * Given a JsonObject containing the graph data and it's ID, it builds the baseline of a GraphStream Graph,
+	 * a Graph with it's own attributes
 	 * @param data
 	 * @return
 	 */
-	private static Graph createGraph(JsonObject data, String graphID)
+	protected static Graph createGraph(JsonObject data, String graphID)
 	{
+		//Create a graph using the given graph ID
 		Graph graph = new DefaultGraph(graphID, false, false);
 		
+		//Fetch the graphs attributes using the data provided
 		HashMap<String, String> graphAttributes = extractAttributes(data);
 		
+		//Go through the map containing the attributes and add then into the graph
 		for(Entry<String, String> attribute : graphAttributes.entrySet())
 		{
+			//The .replace("\"", "") thingy is to make sure we don't read " symbols into our key/value Strings
+			//It would prove a problem when saving a graph created using this method, causing it
+			//to have keys/values with, at least, double quotes
 			String key = attribute.getKey().replace("\"", "");
 			String value = attribute.getValue().toString().replace("\"", "");
 			
 			graph.addAttribute(key, value);
 		}
-		
 		return graph;
 	}
 
 	
 	/**
-	 * 
-	 * @param data
-	 * @param g
+	 * From the supplied data, retrieve the edges on it and add them into the graph
+	 * @param data JsonObject containing the data
+	 * @param graph an existing graph
 	 */
-	private static void insertEdges(JsonObject data, Graph g)
+	protected static void insertEdges(JsonObject data, Graph graph)
 	{	
-		JsonArray jsonEdges = data.getAsJsonArray(FileGraphIdentifiers.Edges.toString());
+		//Find the edges within the given data
+		JsonArray jEdges = data.getAsJsonArray(FileGraphIdentifiers.Edges.toString());
 		
-		for(JsonElement jsonEdge : jsonEdges)
+		//Run through every edge on the jEdges JsonArray
+		for(JsonElement jEdge : jEdges)
 		{
-			String id = null;
-			Node from = null;
-			Node to = null;
+			String edgeID = null;
+			Node fromNode = null;
+			Node toNode = null;
 			HashMap<String, Object> attributes = new HashMap<>();
 			
-			for(Entry<String, JsonElement> e : jsonEdge.getAsJsonObject().entrySet())
+			//Given a JsonElement that represents an edge
+			for(Entry<String, JsonElement> e : jEdge.getAsJsonObject().entrySet())
 			{
+				//Get it's key
 				String key = e.getKey().replace("\"", "");
 				
+				//Assume a generic data type for the value
 				Object value = null;
 				
+				//Find out if the value is an JsonObject or not
 				if(!e.getValue().isJsonObject())
 				{
+					//If it isn't, then it must be an actual value
+					//Convert it into a string removing any quotes
 					value = e.getValue().toString().replace("\"", "");
 				}
 				else
 				{
+					//If not, then we are before a JsonObject that contains a tuple of data
+					//The tuple contains the value and it's Java Data Type
+					
+					//Take the value and convert it into a JsonObject
 					JsonObject sub = e.getValue().getAsJsonObject();
+					
+					//Take the value as a String
 					String subValue = sub.get(FileGraphIdentifiers.AttributeValue.toString()).getAsString();
+					
+					//Get the value's type
 					String type = sub.get(FileGraphIdentifiers.AttributeType.toString()).getAsString();
 					
+					//Using the information we took, use the ClassTypeUtil generic parseValue method
+					//to parse any string value into the specified Java Data Type
 					value = ClassTypeUtil.parseValue(subValue, ClassTypeUtil.valueOfEnum(type));
 				}
 				
+				//Fill the edge related data (ID, connecting nodes and attributes)
 				switch(FileGraphIdentifiers.valueOfEnum(key))
 				{
 					case EdgeID:
-						id = (String)value;
+						edgeID = (String)value;
 						break;
 					case EdgeNode1ID:
-						from = g.getNode((String)value);
+						fromNode = graph.getNode((String)value);
 						break;
 					case EdgeNode2ID:
-						to = g.getNode((String)value);
+						toNode = graph.getNode((String)value);
 						break;
-
+					//The generic attribute are not defined on the FileGraphIdentifiers enum
+					//so they fall into the switch's default case
 					default:
 						attributes.put(key, value);
 						break;
 				}
 			}
 			
-			if(id != null && from != null && to != null)
+			//Check if the edge data has been successfully extracted
+			if(edgeID != null && fromNode != null && toNode != null)
 			{
-				Edge e = g.addEdge(id, from, to);
+				//Add the edge into the graph
+				Edge e = graph.addEdge(edgeID, fromNode, toNode);
+				//Add the attributes into the edge
 				for(Entry<String, Object> attribute : attributes.entrySet())
 				{
 					e.setAttribute(attribute.getKey(), attribute.getValue());
@@ -337,52 +400,76 @@ public class GraphParser
 
 	
 	/**
-	 * 
-	 * @param data
-	 * @param graph
+	 * From the supplied data, retrieve the nodes on it and add them into the graph
+	 * @param data JsonObject containing the data
+	 * @param graph an existing graph
 	 */
-	private static void insertNodes(JsonObject data, Graph graph)
+	protected static void insertNodes(JsonObject data, Graph graph)
 	{		
+		//Find the nodes within the given data
 		JsonArray jsonNodes = data.getAsJsonArray(FileGraphIdentifiers.Nodes.toString());
 		
+		//Run through every node on the jNodes JsonArray
 		for(JsonElement jsonNode : jsonNodes)
 		{		
 			String id = null;
 			HashMap<String, Object> attributes = new HashMap<>();
 			
+			//Given a JsonElement that represents an node
 			for(Entry<String, JsonElement> e : jsonNode.getAsJsonObject().entrySet())
 			{
+				//Get it's key
 				String key = e.getKey().replace("\"", "");
 				
+				//Assume a generic data type for the value
 				Object value = null;
 				
+				//Find out if the value is an JsonObject or not
 				if(!e.getValue().isJsonObject())
 				{
+					//If it isn't, then it must be an actual value
+					//Convert it into a string removing any quotes
 					value = e.getValue().toString().replace("\"", "");
 				}
 				else
 				{
+					//If not, then we are before a JsonObject that contains a tuple of data
+					//The tuple contains the value and it's Java Data Type
+					
+					//Take the value and convert it into a JsonObject
 					JsonObject sub = e.getValue().getAsJsonObject();
+					
+					//Take the value as a String
 					String subValue = sub.get(FileGraphIdentifiers.AttributeValue.toString()).getAsString();
+					
+					//Get the value's type
 					String type = sub.get(FileGraphIdentifiers.AttributeType.toString()).getAsString();
 					
+					//Using the information we took, use the ClassTypeUtil generic parseValue method
+					//to parse any string value into the specified Java Data Type
 					value = ClassTypeUtil.parseValue(subValue, ClassTypeUtil.valueOfEnum(type));
 				}
 				
+				//Fill the node related data (ID and attributes)
 				switch(FileGraphIdentifiers.valueOfEnum(key))
 				{
 					case NodeID:
 						id = (String) value;
 						break;
+					//The generic attribute are not defined on the FileGraphIdentifiers enum
+					//so they fall into the switch's default case
 					default:
 						attributes.put(key, value);
 						break;
 				}
 			}
 			
+			//Check if the node data has been successfully extracted
 			if(id != null)
 			{
+				//Add the node into the graph
 				Node n = graph.addNode(id);
+				//Add the attributes into the node
 				for(Entry<String, Object> attribute : attributes.entrySet())
 				{
 					n.setAttribute(attribute.getKey(), attribute.getValue());
@@ -393,16 +480,19 @@ public class GraphParser
 
 
 	/**
-	 * 
-	 * @param data
-	 * @return
+	 * Given a JsonObject that contains data about a graph, this method returns the contained graph's attributes 
+	 * in the form of an hash map
+	 * @param data JsonObject containing the data
+	 * @return a map of the graph's attributes
 	 */
-	private static HashMap<String, String> extractAttributes(JsonObject data)
+	protected static HashMap<String, String> extractAttributes(JsonObject data)
 	{
 		HashMap<String, String> graphAttributes = new HashMap<>();
 		
+		//Attempt to retrieve the graph's attributes into a JsonObject
 		JsonObject jsonGraphAttributes = data.getAsJsonObject(FileGraphIdentifiers.GraphAttributes.toString());
 		
+		//Run through an entry set that possibly contains the attributes 
 		for(Entry<String, JsonElement> e : jsonGraphAttributes.entrySet())
 		{
 			String key = e.getKey().replace("\"", "");

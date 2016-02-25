@@ -76,7 +76,18 @@ public class ParserTester
 	 */
 	private static Graph load(String filename)
 	{
-		return GraphParser.graphFromFile(filename);
+		Graph graph = null;
+		try
+		{
+			graph = GraphParser.graphFromFile(filename);
+		}
+		catch(IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return graph;
 	}
 
 	
